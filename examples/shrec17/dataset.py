@@ -8,6 +8,8 @@ import torch
 import torch.utils.data
 import trimesh
 import logging
+import itertools
+import random
 
 logging.getLogger('pyembree').disabled = True
 
@@ -409,6 +411,25 @@ class ModelNet(torch.utils.data.Dataset):
                     self.files.append(os.path.join(self.dir, label, data_type, item))
                     self.labels.append(self.class_to_idx[label])
 
+        if few:
+            files = []
+            labels = []
+            for i in range(len(self.classes)):
+                files_i = [self.files[j] for j in range(len(self.files)) if self.labels[j] == i]
+                #print(files_i)
+                #print(len(files_i))
+                #randidx = np.random.permutation(len(files_i))[:9]
+                #files.append(files_i[randidx])
+                files.append(random.sample(files_i, 9))
+                labels.append([i]*9)
+                #print(files[-1])
+                #print(len(files[-1]))
+            self.files = list(itertools.chain.from_iterable(files))
+            self.labels = list(itertools.chain.from_iterable(labels))
+            print("Use few 10 dataset")
+            print("#training examples: ", len(self.files))
+
+
     def find_classes(self):
         classes = [d for d in os.listdir(self.dir) if os.path.isdir(os.path.join(self.dir, d))]
         classes.sort()
@@ -428,7 +449,7 @@ class ModelNet(torch.utils.data.Dataset):
         return len(self.files)
 
 if __name__ == "__main__":
-    ModelNet30 = ModelNet("/home/lixin/Documents/s2cnn/ModelNet", "ModelNet30", "train", transform=None)
+    ModelNet30 = ModelNet("/home/lixin/Documents/s2cnn/ModelNet", "ModelNet10", "train", few=True, transform=None)
     print(len(ModelNet30))
     print(ModelNet30.classes)
     print(ModelNet30.class_to_idx)

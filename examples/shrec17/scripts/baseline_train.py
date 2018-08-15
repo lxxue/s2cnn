@@ -13,7 +13,8 @@ import types
 import importlib.machinery
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT)
 from dataset import ModelNet, CacheNPY, ToMesh, ProjectOnSphere
 
 
@@ -23,6 +24,7 @@ def main(log_dir, model_path, augmentation, dataset, num_cls, few, batch_size, n
     os.mkdir(log_dir)
     shutil.copy2(__file__, os.path.join(log_dir, "script.py"))
     shutil.copy2(model_path, os.path.join(log_dir, "model.py"))
+    shutil.copy2(os.path.join(ROOT, "dataset.py"), os.path.join(log_dir, "dataset.py"))
 
     logger = logging.getLogger("train")
     logger.setLevel(logging.DEBUG)
@@ -78,7 +80,7 @@ def main(log_dir, model_path, augmentation, dataset, num_cls, few, batch_size, n
         train_data_type = "train"
         test_data_type = "test"
 
-    train_set = ModelNet("/home/lixin/Documents/s2cnn/ModelNet", dataset, train_data_type, transform=train_transform)
+    train_set = ModelNet("/home/lixin/Documents/s2cnn/ModelNet", dataset, train_data_type, few=few, transform=train_transform)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
 
     test_set = ModelNet("/home/lixin/Documents/s2cnn/ModelNet", dataset, test_data_type, transform=test_transform)
