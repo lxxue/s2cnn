@@ -369,3 +369,57 @@ class Shrec17(torch.utils.data.Dataset):
             self._download(url)
 
         print('Done!')
+
+class ModelNet(torch.utils.data.Dataset):
+    def __init__(self, root, dataset, data_type, few=False, transform=None, target_transform=None):
+        self.root = os.path.expanduser(root)
+
+        if not dataset in ['ModelNet30', 'ModelNet10']:
+            raise ValueError("Invalid dataset")
+
+        if not data_type in ['train', 'test']:
+            raise ValueError("Invalid data type")
+
+        if "30" in dataset and few:
+            raise ValueError("No few verision of ModelNet30")
+
+        self.dir = os.path.join(self.root, dataset)
+        self.transform = transform
+        self.target_transform = target_transform
+	
+        self.classes, self.class_to_idx = self.find_classes()
+
+        self.files = []
+        self.labels = []
+        # root / <label>  / <train/test> / <item>.off
+        for label in os.listdir(self.dir): # Label
+            for item in os.listdir(self.dir + '/' + label + '/' + data_type):
+                self.files.append(item)
+                self.labels.append(self.class_to_idx[label])
+
+    def find_classes(self):
+        classes = [d for d in os.listdir(self.dir) if os.path.isdir(os.path.join(self.dir, d))]
+        classes.sort()
+        class_to_idx = {classes[i]: i for i in range(len(classes))}
+
+        return classes, class_to_idx
+
+    def __getitem__(self, index):
+        img = f = self.files[index]
+        
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, self.labels[index]
+
+    def __len__(self):
+        return len(self.files)
+
+if __name__ == "__main__":
+    ModelNet30 = ModelNet("/home/lixin/Documents/s2cnn/ModelNet", "ModelNet30", "train", transform=None)
+    print(len(ModelNet30))
+    print(ModelNet30.classes)
+    print(ModelNet30.class_to_idx)
+    print(ModelNet30[-1])
+    print(ModelNet30[1])
+
