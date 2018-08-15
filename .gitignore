@@ -5,4 +5,7 @@ build
 dist
 *cache
 *.off
+log_*/
 ModelNet40.zip
+ModelNet10/
+ModelNet30/

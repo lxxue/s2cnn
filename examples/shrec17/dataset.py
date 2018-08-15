@@ -102,6 +102,10 @@ def rnd_rot():
     rot = rotmat(a, np.arccos(z), c, True)
     return rot
 
+def rnd_z_rot():
+    c = np.random.rand() * 2 * np.pi
+    rot = rotmat(0., 0., c, True)
+    return rot
 
 class ToMesh:
     def __init__(self, random_rotations=False, random_translation=0):
@@ -124,7 +128,7 @@ class ToMesh:
 
         if self.tr > 0:
             tr = np.random.rand() * self.tr
-            rot = rnd_rot()
+            rot = rnd_z_rot()
             mesh.apply_transform(rot)
             mesh.apply_translation([tr, 0, 0])
 
@@ -132,7 +136,7 @@ class ToMesh:
                 mesh.apply_transform(rot.T)
 
         if self.rot:
-            mesh.apply_transform(rnd_rot())
+            mesh.apply_transform(rnd_z_rot())
 
         r = np.max(np.linalg.norm(mesh.vertices, axis=-1))
         mesh.apply_scale(0.99 / r)
@@ -193,19 +197,25 @@ class CacheNPY:
         self.pick_randomly = pick_randomly
 
     def check_trans(self, file_path):
-        print("transform {}...".format(file_path))
+        #print("transform {}...".format(file_path))
         try:
             return self.transform(file_path)
-        except:
+        except Exception as e:
+            print(repr(e))
             print("Exception during transform of {}".format(file_path))
             raise
 
     def __call__(self, file_path):
+        #print("file_path", file_path)
         head, tail = os.path.split(file_path)
+        #print("head", head)
+        #print("tail", tail)
         root, _ = os.path.splitext(tail)
+        #print("root", root)
         npy_path = os.path.join(head, self.prefix + root + '_{0}.npy')
-
+        #print("npy_path", npy_path)
         exists = [os.path.exists(npy_path.format(i)) for i in range(self.repeat)]
+        #print("exists", exists)
 
         if self.pick_randomly and all(exists):
             i = np.random.randint(self.repeat)
@@ -218,6 +228,7 @@ class CacheNPY:
 
             return img
 
+        #print("pick all augmented data")
         output = []
         for i in range(self.repeat):
             try:
@@ -393,9 +404,10 @@ class ModelNet(torch.utils.data.Dataset):
         self.labels = []
         # root / <label>  / <train/test> / <item>.off
         for label in os.listdir(self.dir): # Label
-            for item in os.listdir(self.dir + '/' + label + '/' + data_type):
-                self.files.append(item)
-                self.labels.append(self.class_to_idx[label])
+            for item in os.listdir(os.path.join(self.dir, label, data_type)):
+                if "off" in item:
+                    self.files.append(os.path.join(self.dir, label, data_type, item))
+                    self.labels.append(self.class_to_idx[label])
 
     def find_classes(self):
         classes = [d for d in os.listdir(self.dir) if os.path.isdir(os.path.join(self.dir, d))]
