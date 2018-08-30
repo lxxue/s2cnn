@@ -81,7 +81,10 @@ def main(log_dir, model_path, augmentation, dataset, num_cls, few, batch_size, n
         test_data_type = "test"
 
     train_set = ModelNet("/home/lixin/Documents/s2cnn/ModelNet", dataset, train_data_type, few=few, transform=train_transform)
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+    if few:
+        train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=False)
+    else:
+        train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
 
     test_set = ModelNet("/home/lixin/Documents/s2cnn/ModelNet", dataset, test_data_type, transform=test_transform)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True, drop_last=False)

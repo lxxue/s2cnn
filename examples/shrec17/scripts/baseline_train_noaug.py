@@ -18,7 +18,7 @@ sys.path.append(ROOT)
 from dataset import ModelNet, CacheNPY, ToMesh, ProjectOnSphere
 
 
-def main(log_dir, model_path, ckpt_path, augmentation, dataset, num_cls, few, batch_size, num_workers, learning_rate):
+def main(log_dir, model_path, augmentation, dataset, num_cls, few, batch_size, num_workers, learning_rate):
     arguments = copy.deepcopy(locals())
 
     os.mkdir(log_dir)
@@ -47,25 +47,8 @@ def main(log_dir, model_path, ckpt_path, augmentation, dataset, num_cls, few, ba
     model = mod.Model(num_cls)
     model.cuda()
 
-
-    logger.info("==>Loading checkpoint ...")
-    checkpoint = torch.load(ckpt_path)
-    new_state_dict = model.state_dict()
-    original_state_dict = checkpoint
-    # check what is loaded and what is not
-    #for k in original_state_dict:
-    #    if k in new_state_dict:
-    #        print("loading weight: {}".format(k))
-    #    else:
-    #        print("discard weight: {}".format(k))
-
-    original_state_dict = {k: v for k, v in original_state_dict.items() if k in new_state_dict}
-    new_state_dict.update(original_state_dict)
-    model.load_state_dict(new_state_dict)
-    
-
     logger.info("{} paramerters in total".format(sum(x.numel() for x in model.parameters())))
-    logger.info("{} paramerters in the last layer".format(sum(x.numel() for x in model.new_out_layer.parameters())))
+    logger.info("{} paramerters in the last layer".format(sum(x.numel() for x in model.out_layer.parameters())))
 
     bw = model.bandwidths[0]
 
@@ -73,7 +56,7 @@ def main(log_dir, model_path, ckpt_path, augmentation, dataset, num_cls, few, ba
     # Increasing `repeat` will generate more cached files
     train_transform = CacheNPY(prefix="b{}_".format(bw), repeat=augmentation, pick_randomly=True, transform=torchvision.transforms.Compose(
         [
-            ToMesh(random_rotations=True, random_translation=0.1),
+            ToMesh(random_rotations=False, random_translation=0.1),
             ProjectOnSphere(bandwidth=bw)
         ]
     ))
@@ -200,7 +183,6 @@ if __name__ == "__main__":
 
     parser.add_argument("--log_dir", type=str, required=True)
     parser.add_argument("--model_path", type=str, required=True)
-    parser.add_argument("--ckpt_path", type=str, required=True)
     parser.add_argument("--augmentation", type=int, default=1,
                         help="Generate multiple image with random rotations and translations")
     #parser.add_argument("--dataset", choices={"test", "val", "train"}, default="train")
